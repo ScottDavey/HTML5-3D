@@ -154,46 +154,166 @@ var Input = {
 function Game () {
 	this.isRunning				= true;
 	this.fps					= 0;
-	this.camera					= new THREE.PerspectiveCamera(70, main.CANVAS_WIDTH, main.CANVAS_HEIGHT, 1, 1000);
-	this.scene					= new THREE.Scene();
-	this.plan 					= {};
+	this.camera					= {};
+	this.scene					= {};
+	this.plane 					= {};
 	this.cube 					= {};
+	this.ambientLight 			= {};
+	this.program				= {};
+	this.sprite					= {};
+	this.pointLight				= {};
+	this.cameraMoveX			= 0;
+	this.cameraMoveY			= 0;
+	this.cameraMoveZ			= 0;
+	this.pLightMoveX			= 0;
+	this.pLightMoveY			= 0;
+	this.pLightMoveZ			= 0;
 }
 
 Game.prototype.Initialize = function () {
-	var geoBox, geoPlane, i, hex, matBox, matPlane;
-	this.camera.position.y 	= 150;
-	this.camera.position.z 	= 500;
-	// CUBE
-	geoBox				= new THREE.BoxGeometry(200, 200, 200);
-	for (i = 0; i < geoBox.faces.length; i+=2) {
-		hex = Math.random() * 0xffffff;
-		geoBox.faces[i].color.setHex(hex);
-		geoBox.faces[i+1].color.setHex(hex);
-	}
-	matBox				= new THREE.MeshBasicMaterial({ vertexColors: THREE.FaceColors, overdraw: 0.5 });
-	this.cube 				= new THREE.Mesh(geoBox, matBox);
-	this.cube.position.y 	= 150;
-	this.scene.add(this.cube);
+	var geoBox, geoPlane;
+
+	// Scene
+	this.scene = new THREE.Scene();
+	
+	// Camera
+	this.camera = new THREE.PerspectiveCamera(70, main.CANVAS_WIDTH / main.CANVAS_HEIGHT, 1, 4000);
+	this.camera.position.set(0, 475, 425);
+	this.camera.rotation.x 	= -70;
+
+	// LIGHT
+	this.ambientLight = new THREE.AmbientLight(0x404040);
+
+	this.pointLight = new THREE.PointLight(0xff0040, 1, 100);
+	this.pointLight.position.set(0, 300, 145);
+
+	// BOX
+	geoBox = new THREE.BoxGeometry(25, 25, 25);
+	this.cube = new THREE.Mesh(geoBox, new THREE.MeshLambertMaterial({color: 0x990000, overdraw: 0.5}));
+	this.cube.castShadow = true;
+
 	// PLANE
-	geoPlane				= new THREE.PlaneBufferGeometry(200, 200);
-	geoPlane.rotateX(-Math.PI / 2);
-	matPlane				= new THREE.MeshBasicMaterial({color:0x0E0E0E, overdraw: 0.5});
-	this.plane				= new THREE.Mesh(geoPlane, matPlane);
-	this.scene.add(this.plane)
+	geoPlane = new THREE.PlaneGeometry(1080, 1080);
+	this.plane = new THREE.Mesh(geoPlane, new THREE.MeshPhongMaterial({color:0x009900, specular: 0x00ff00, overdraw: 0.5}));
+	this.plane.position.set(0, -300, 0);
+	this.plane.rotation.x = -90;
+
+	// ADD Components
+	this.scene.add(this.cube);
+	this.scene.add(this.plane);
+	this.scene.add(this.ambientLight);
+	this.scene.add(this.pointLight);
+
 	GameTime.update();
+
 };
+
+/*Game.prototype.Initialize = function () {
+	var geoBox, geoPlane, i, matBox, matPlane, program;
+
+	// Scene
+	this.scene = new THREE.Scene();
+	
+	// Camera
+	this.camera = new THREE.PerspectiveCamera(70, main.CANVAS_WIDTH / main.CANVAS_HEIGHT, 1, 1000);
+	this.camera.position.set(0, 475, 425);
+	this.camera.rotation.x 	= -70;
+
+	// Cube
+	geoBox = new THREE.BoxGeometry(25, 25, 25);
+	// matBox = new THREE.MeshBasicMaterial( { vertexColors: THREE.FaceColors, overdraw: 0.5 } );
+	matBox = new THREE.MeshLambertMaterial( { color: 0x222222, overdraw: 0.5 } );
+	this.cube = new THREE.Mesh(geoBox, matBox);
+	this.cube.position.z = 345;
+	this.cube.position.y = 0;
+
+	// Plane
+	geoPlane = new THREE.PlaneBufferGeometry(main.CANVAS_WIDTH, main.CANVAS_HEIGHT);
+	geoPlane.rotateX(-Math.PI / 2);
+	var matPlane = new THREE.MeshLambertMaterial( { color: 0x990000, overdraw: 0.5 } );
+	this.plane = new THREE.Mesh(geoPlane, matPlane);
+
+	this.scene.add(new THREE.AmbientLight( 0x00020 ));
+
+	// ADD COMPONENTS TO SCENE
+	this.scene.add(this.cube);
+	this.scene.add(this.plane);
+	// this.scene.add(this.ambientLight);
+
+	GameTime.update();
+};*/
 
 Game.prototype.update = function () {
 	this.fps = fps.getFPS();
-	this.plane.rotation.y = this.cube.rotation.y += (5 - this.cube.rotation.y) * 0.05;
+
+	// POINT LIGHT MOVEMENT
+	if (Input.Keys.GetKey(Input.Keys.UP)) {
+		this.pLightMoveZ = -1;
+		console.log(this.plane.position);
+	} else if (Input.Keys.GetKey(Input.Keys.DOWN)) {
+		this.pLightMoveZ = 1;
+		console.log(this.plane.position);
+	}
+
+	if (Input.Keys.GetKey(Input.Keys.LEFT)) {
+		this.pLightMoveX = -1;
+		console.log(this.plane.position);
+	} else if (Input.Keys.GetKey(Input.Keys.RIGHT)) {
+		this.pLightMoveX = 1;
+		console.log(this.plane.position);
+	}
+
+	if (Input.Keys.GetKey(Input.Keys.R) && Input.Keys.GetKey(Input.Keys.SHIFT)) {
+		this.pLightMoveY = -1;
+		console.log(this.plane.position);
+	} else if (Input.Keys.GetKey(Input.Keys.R)) {
+		this.pLightMoveY = 1;
+		console.log(this.plane.position);
+	}
+
+	this.plane.position.z += this.pLightMoveZ * 5;
+	this.plane.position.x += this.pLightMoveX * 5;
+	this.plane.position.y += this.pLightMoveY * 5;
+	
+	this.pLightMoveX	= 0;
+	this.pLightMoveY	= 0;
+	this.pLightMoveZ	= 0;
+
+	// CUBE MOVEMENT
+	if (Input.Keys.GetKey(Input.Keys.W)) {
+		this.cameraMoveZ = -1;
+	} else if (Input.Keys.GetKey(Input.Keys.S)) {
+		this.cameraMoveZ = 1;
+	}
+
+	if (Input.Keys.GetKey(Input.Keys.A)) {
+		this.cameraMoveX = -1;
+	} else if (Input.Keys.GetKey(Input.Keys.D)) {
+		this.cameraMoveX = 1;
+	}
+
+	if (Input.Keys.GetKey(Input.Keys.SPACE) && Input.Keys.GetKey(Input.Keys.SHIFT)) {
+		this.cameraMoveY = -1;
+	} else if (Input.Keys.GetKey(Input.Keys.SPACE)) {
+		this.cameraMoveY = 1;
+	}
+
+	this.cube.position.z += this.cameraMoveZ * 5;
+	this.cube.position.x += this.cameraMoveX * 5;
+	this.cube.position.y += this.cameraMoveY * 5;
+
+	if (this.cube.position.y <= 0) this.cube.position.y = 0; 
+	
+	this.cameraMoveX	= 0;
+	this.cameraMoveY	= 0;
+	this.cameraMoveZ	= 0;
 };
 
 Game.prototype.draw = function () {
 
+	main.renderer.render(this.scene, this.camera);
 	// main.context.clearRect(0, 0, main.CANVAS_WIDTH, main.CANVAS_HEIGHT);
 	// DrawText('FPS: ' + this.fps, (main.CANVAS_WIDTH / 2 - 50), 20, 'normal 14pt Consolas, Trebuchet MS, Verdana', '#FFFFFF');
-	main.renderer.render(this.scene, this.camera);
 };
 
 /*****************
@@ -207,29 +327,30 @@ var main = {
 		this.CANVAS_HEIGHT			= 720;
 		this.WORLD_WIDTH 			= 4320;
 		this.WORLD_HEIGHT 			= 2160;
-		// this.canvas					= document.getElementById('viewport');
-		// this.canvas.width			= this.CANVAS_WIDTH;
-		// this.canvas.height			= this.CANVAS_HEIGHT;
-		// this.context				= this.canvas.getContext('2d');
-		this.container				= document.getElementById('thing');
+		this.canvas					= {};
+		this.context				= {};
+		this.container				= document.getElementById('wrapper');
 		this.renderer				= new THREE.CanvasRenderer();
 		this.game 					= new Game();
 
 		// Update Renderer Setting
-		this.renderer.setClearColor(0xf0f0f0);
+		this.renderer.setClearColor(0x000000);
 		this.renderer.setPixelRatio(window.devicePixelRatio);
 		this.renderer.setSize(this.CANVAS_WIDTH, this.CANVAS_HEIGHT);
 		this.container.appendChild(this.renderer.domElement);
 
+		this.canvas 				= document.getElementsByTagName('canvas')[0];
+		this.context 				= this.canvas.getContext('2d');
+
 		// Adjust webpage styles
-		// wrapper = document.getElementById('wrapper');
-		// wrapper.style.width			= this.CANVAS_WIDTH + 'px';
-		// wrapper.style.height		= this.CANVAS_HEIGHT + 'px';
+		wrapper = document.getElementById('wrapper');
+		wrapper.style.width			= this.CANVAS_WIDTH + 'px';
+		wrapper.style.height		= this.CANVAS_HEIGHT + 'px';
 
 		// Create event listeners
 		window.addEventListener('keyup', function (e) { Input.Keys.onKeyUp(e); }, false);
 		window.addEventListener('keydown', function (e) { Input.Keys.onKeyDown(e); }, false);
-		// this.canvas.addEventListener('mousemove', function (e) { Input.Mouse.OnMouseMove.SetPosition(e); }, false);
+		this.canvas.addEventListener('mousemove', function (e) { Input.Mouse.OnMouseMove.SetPosition(e); }, false);
 		// this.canvas.addEventListener('mousedown', function (e) { Input.Mouse.OnMouseDown(e); }, false);
 		// this.canvas.addEventListener('mouseup', function (e) { Input.Mouse.OnMouseUp(e); }, false);
 
