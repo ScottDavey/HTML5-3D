@@ -148,31 +148,69 @@ var Input = {
 	}
 };
 
+/*************************
+*****  PLAYER CLASS  *****
+*************************/
+function Player (level) {
+	this.level 		= level;
+	this.pos 	= new THREE.Vector3(0, 0, 0);
+	console.log(this.pos);
+}
+
+/************************
+*****  LEVEL CLASS  *****
+************************/
+function Level (game) {
+	this.game 		= game;
+	this.scene 		= {};
+	this.camera 	= {};
+	this.controls 	= {};
+	this.floor 		= {};
+	this.player		= {};
+
+	this.Initialize();
+}
+
+Level.prototype.Initialize = function () {
+	this.scene 		= new THREE.Scene();
+	this.camera 	= new THREE.PerspectiveCamera(70, main.CANVAS_WIDTH / main.CANVAS_HEIGHT, 1, 1000);
+	this.controls 	= new THREE.OrbitControls(this.camera, main.renderer.domElement);
+	this.player 	= new Player(this);
+	this.floor 		= new THREE.Mesh(new THREE.BoxGeometry(2000, 1, 2000), new THREE.MeshBasicMaterial({color: 0xffffff, overdraw: 0.5}));
+
+	// Camera / Controls
+	this.camera.position.set(0, 475, 425);
+	this.camera.rotation.x = -Math.PI / 4;
+	this.controls.target.set(this.player.pos.x, this.player.pos.y, 0);
+	this.controls.update();
+
+	// Add components
+	this.scene.add(this.camera);
+	this.scene.add(this.floor);
+};
+
+Level.prototype.update = function () {
+
+};
+
+Level.prototype.draw = function () {
+	main.renderer.render(this.scene, this.camera);
+};
+
 /***********************
 *****  GAME CLASS  *****
 ***********************/
 function Game () {
 	this.isRunning				= true;
 	this.fps					= 0;
-	this.camera					= {};
-	this.scene					= {};
-	this.plane 					= {};
-	this.cube 					= {};
-	this.ambientLight 			= {};
-	this.program				= {};
-	this.sprite					= {};
-	this.pointLight				= {};
-	this.cameraMoveX			= 0;
-	this.cameraMoveY			= 0;
-	this.cameraMoveZ			= 0;
-	this.pLightMoveX			= 0;
-	this.pLightMoveY			= 0;
-	this.pLightMoveZ			= 0;
+	this.level 					= {};
 }
 
 Game.prototype.Initialize = function () {
-	var geoBox, geoPlane;
+	var geoBox, matBox, geoPlane, matPlane;
 
+	this.level = new Level(this);
+	/*
 	// Scene
 	this.scene = new THREE.Scene();
 	
@@ -181,71 +219,50 @@ Game.prototype.Initialize = function () {
 	this.camera.position.set(0, 475, 425);
 	this.camera.rotation.x 	= -70;
 
-	// LIGHT
-	this.ambientLight = new THREE.AmbientLight(0x404040);
+	this.controls = new THREE.OrbitControls(this.camera, main.renderer.domElement);
+	this.controls.target.set(0, 1, 0);
+	this.controls.update();
 
-	this.pointLight = new THREE.PointLight(0xff0040, 1, 100);
-	this.pointLight.position.set(0, 300, 145);
+	// FLOOR
+	matPlane 	= new THREE.MeshPhongMaterial();
+	matPlane.color.set(0x808080);
+	geoPlane 	= new THREE.BoxGeometry(2000,1,2000);
+	this.plane 	= new THREE.Mesh(geoPlane, matPlane);
+	this.plane.recieveShadow = true;
+	this.plane.position.set(0, -0.05, 0);
 
-	// BOX
-	geoBox = new THREE.BoxGeometry(25, 25, 25);
-	this.cube = new THREE.Mesh(geoBox, new THREE.MeshLambertMaterial({color: 0x990000, overdraw: 0.5}));
-	this.cube.castShadow = true;
-
-	// PLANE
-	geoPlane = new THREE.PlaneGeometry(1080, 1080);
-	this.plane = new THREE.Mesh(geoPlane, new THREE.MeshPhongMaterial({color:0x009900, specular: 0x00ff00, overdraw: 0.5}));
-	this.plane.position.set(0, -300, 0);
-	this.plane.rotation.x = -90;
-
-	// ADD Components
-	this.scene.add(this.cube);
+	// LIGHTS
+	this.ambientLight 		= new THREE.AmbientLight(0xffffff, 0.1)
+	this.spotLight 			= new THREE.SpotLight(0xffffff, 1);
+	this.spotLight.position.set(15, 400, 35);
+	this.spotLight.castShadow = true;
+	this.spotLight.angle = Math.PI / 4;
+	this.spotLight.penumbra = 0.05;
+	this.spotLight.decay = 2;
+	this.spotLight.distance = 200;
+	this.spotLight.shadow.mapSize.width = 1024;
+	this.spotLight.shadow.mapSize.height = 1024;
+	this.spotLight.shadow.camera.near = 1;
+	this.spotLight.shadow.camera.far = 200;
+	this.spotLightHelper = new THREE.SpotLightHelper(this.spotLight);
+	
+	// ADD COMPONENTS
+	this.scene.add(this.camera);
 	this.scene.add(this.plane);
 	this.scene.add(this.ambientLight);
-	this.scene.add(this.pointLight);
+	this.scene.add(this.spotLight);
+	this.scene.add(this.spotLightHelper);*/
 
 	GameTime.update();
 
 };
 
-/*Game.prototype.Initialize = function () {
-	var geoBox, geoPlane, i, matBox, matPlane, program;
-
-	// Scene
-	this.scene = new THREE.Scene();
-	
-	// Camera
-	this.camera = new THREE.PerspectiveCamera(70, main.CANVAS_WIDTH / main.CANVAS_HEIGHT, 1, 1000);
-	this.camera.position.set(0, 475, 425);
-	this.camera.rotation.x 	= -70;
-
-	// Cube
-	geoBox = new THREE.BoxGeometry(25, 25, 25);
-	// matBox = new THREE.MeshBasicMaterial( { vertexColors: THREE.FaceColors, overdraw: 0.5 } );
-	matBox = new THREE.MeshLambertMaterial( { color: 0x222222, overdraw: 0.5 } );
-	this.cube = new THREE.Mesh(geoBox, matBox);
-	this.cube.position.z = 345;
-	this.cube.position.y = 0;
-
-	// Plane
-	geoPlane = new THREE.PlaneBufferGeometry(main.CANVAS_WIDTH, main.CANVAS_HEIGHT);
-	geoPlane.rotateX(-Math.PI / 2);
-	var matPlane = new THREE.MeshLambertMaterial( { color: 0x990000, overdraw: 0.5 } );
-	this.plane = new THREE.Mesh(geoPlane, matPlane);
-
-	this.scene.add(new THREE.AmbientLight( 0x00020 ));
-
-	// ADD COMPONENTS TO SCENE
-	this.scene.add(this.cube);
-	this.scene.add(this.plane);
-	// this.scene.add(this.ambientLight);
-
-	GameTime.update();
-};*/
-
 Game.prototype.update = function () {
 	this.fps = fps.getFPS();
 
+	this.level.update();
+
+	/*
 	// POINT LIGHT MOVEMENT
 	if (Input.Keys.GetKey(Input.Keys.UP)) {
 		this.pLightMoveZ = -1;
@@ -278,6 +295,7 @@ Game.prototype.update = function () {
 	this.pLightMoveX	= 0;
 	this.pLightMoveY	= 0;
 	this.pLightMoveZ	= 0;
+	
 
 	// CUBE MOVEMENT
 	if (Input.Keys.GetKey(Input.Keys.W)) {
@@ -306,12 +324,12 @@ Game.prototype.update = function () {
 	
 	this.cameraMoveX	= 0;
 	this.cameraMoveY	= 0;
-	this.cameraMoveZ	= 0;
+	this.cameraMoveZ	= 0;*/
 };
 
 Game.prototype.draw = function () {
 
-	main.renderer.render(this.scene, this.camera);
+	this.level.draw();
 	// main.context.clearRect(0, 0, main.CANVAS_WIDTH, main.CANVAS_HEIGHT);
 	// DrawText('FPS: ' + this.fps, (main.CANVAS_WIDTH / 2 - 50), 20, 'normal 14pt Consolas, Trebuchet MS, Verdana', '#FFFFFF');
 };
@@ -323,8 +341,8 @@ var main = {
 	init: function () {
 		var wrapper;
 		this.isRunning 				= true;
-		this.CANVAS_WIDTH			= 1080;
-		this.CANVAS_HEIGHT			= 720;
+		this.CANVAS_WIDTH			= window.innerWidth - 50;
+		this.CANVAS_HEIGHT			= window.innerHeight - 60;
 		this.WORLD_WIDTH 			= 4320;
 		this.WORLD_HEIGHT 			= 2160;
 		this.canvas					= {};
